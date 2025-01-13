@@ -15,7 +15,6 @@ public class XmlParser {
 
     public static void main(String[] args) throws XMLStreamException, FileNotFoundException {
         String localPath = System.getProperty("user.dir");
-        System.out.println(localPath);
         String path = localPath + "\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
 
         ArrayList<StartElement> links = XmlParser.findTagsInXMLFile(path, "link");
@@ -24,7 +23,6 @@ public class XmlParser {
             linkIDs[i] = XmlParser.getValueFromTag(links.get(i), "id");
         }
 
-        /*
         Random rand = new Random();
         int workIdIndex = 0;
         int homeIdIndex = 0;
@@ -34,21 +32,7 @@ public class XmlParser {
         }
         String newWorkId = linkIDs[workIdIndex];
         String newHomeId = linkIDs[homeIdIndex];
-        */
 
-        Random rand = new Random();
-        int workIdIndex = 0;
-        int homeIdIndex = 0;
-        int chargerIdIndex = 0;
-        while(workIdIndex == homeIdIndex || chargerIdIndex == homeIdIndex  || workIdIndex == chargerIdIndex){
-            workIdIndex = rand.nextInt(linkIDs.length);
-            homeIdIndex = rand.nextInt(linkIDs.length);
-            chargerIdIndex = rand.nextInt(linkIDs.length);
-        }
-        String newWorkId = linkIDs[workIdIndex];
-        String newHomeId = linkIDs[homeIdIndex];
-        String newChargerId = linkIDs[chargerIdIndex];
-        String newEventType = "charging";
 
         Map<String, Map<Attribute, Map<String, String>>> tagMap = new HashMap<>();
         Map<Attribute, Map<String, String>> condMap = new HashMap<>();
@@ -57,7 +41,6 @@ public class XmlParser {
 
         Attribute workAt = eventFactory.createAttribute("type", "work");
         Attribute homeAt = eventFactory.createAttribute("type", "home");
-        Attribute chargeAt = eventFactory.createAttribute("type", newEventType);
 
         condMap.put(workAt, Map.of("link", newWorkId));
         condMap.put(homeAt, Map.of("link", newHomeId));
@@ -67,8 +50,8 @@ public class XmlParser {
         String plansPath = localPath + "\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
 
 
-            updateXMLFileWithCondition(plansPath, tagMap);
-            System.out.println("Successfully updated the XMLfile");
+        updateXMLFileWithCondition(plansPath, tagMap);
+        System.out.println("Successfully updated the XMLfile");
 
     }
 

@@ -19,13 +19,13 @@ import static org.matsim.project.XmlParser.*;
 public class XmlParserTestChargerChange {
 
     public static void main(String[] args) throws XMLStreamException, FileNotFoundException {
-        String path = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
+        String localPath = System.getProperty("user.dir");
+        String path = localPath + "\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
 
         ArrayList<StartElement> links = findTagsInXMLFile(path, "link");
         String[] linkIDs = new String[links.size()];
         for(int i = 0; i < links.size(); i++){
             linkIDs[i] = getValueFromTag(links.get(i), "id");
-            System.out.println(linkIDs[i]);
         }
 
         Random rand = new Random();
@@ -45,8 +45,8 @@ public class XmlParserTestChargerChange {
 
 
 
-        String plansPath = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
-        String outputTempPath = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan-test.xml";
+        String plansPath = localPath + "\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
+        String outputTempPath = localPath + "\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan-test.xml";
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
 

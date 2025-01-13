@@ -14,15 +14,17 @@ import java.util.*;
 public class XmlParser {
 
     public static void main(String[] args) throws XMLStreamException, FileNotFoundException {
-        String path = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
+        String localPath = System.getProperty("user.dir");
+        System.out.println(localPath);
+        String path = localPath + "\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
 
         ArrayList<StartElement> links = XmlParser.findTagsInXMLFile(path, "link");
         String[] linkIDs = new String[links.size()];
         for(int i = 0; i < links.size(); i++){
             linkIDs[i] = XmlParser.getValueFromTag(links.get(i), "id");
-            System.out.println(linkIDs[i]);
         }
 
+        /*
         Random rand = new Random();
         int workIdIndex = 0;
         int homeIdIndex = 0;
@@ -32,24 +34,41 @@ public class XmlParser {
         }
         String newWorkId = linkIDs[workIdIndex];
         String newHomeId = linkIDs[homeIdIndex];
+        */
+
+        Random rand = new Random();
+        int workIdIndex = 0;
+        int homeIdIndex = 0;
+        int chargerIdIndex = 0;
+        while(workIdIndex == homeIdIndex || chargerIdIndex == homeIdIndex  || workIdIndex == chargerIdIndex){
+            workIdIndex = rand.nextInt(linkIDs.length);
+            homeIdIndex = rand.nextInt(linkIDs.length);
+            chargerIdIndex = rand.nextInt(linkIDs.length);
+        }
+        String newWorkId = linkIDs[workIdIndex];
+        String newHomeId = linkIDs[homeIdIndex];
+        String newChargerId = linkIDs[chargerIdIndex];
+        String newEventType = "charging";
 
         Map<String, Map<Attribute, Map<String, String>>> tagMap = new HashMap<>();
         Map<Attribute, Map<String, String>> condMap = new HashMap<>();
 
         XMLEventFactory eventFactory = XMLEventFactory.newInstance();
 
-
         Attribute workAt = eventFactory.createAttribute("type", "work");
         Attribute homeAt = eventFactory.createAttribute("type", "home");
+        Attribute chargeAt = eventFactory.createAttribute("type", newEventType);
 
         condMap.put(workAt, Map.of("link", newWorkId));
-        condMap.put(workAt, Map.of("link", newHomeId));
+        condMap.put(homeAt, Map.of("link", newHomeId));
 
         tagMap.put("activity", condMap);
 
-        String plansPath = "C:\\Users\\gusta\\Documents\\Exjobb\\Workspaces\\matsim-example-project\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
+        String plansPath = localPath + "\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
 
-        updateXMLFileWithCondition(plansPath, tagMap);
+
+            updateXMLFileWithCondition(plansPath, tagMap);
+            System.out.println("Successfully updated the XMLfile");
 
     }
 
@@ -95,8 +114,9 @@ public class XmlParser {
             if(nextEvent.isStartElement()) {
                 StartElement startElement = nextEvent.asStartElement();
                 String startElemName = startElement.getName().getLocalPart();
+
+
                 if (elemMap.containsKey(startElemName)) {
-                    Iterator<Attribute> attributes = startElement.getAttributes();
                     Map<String,String> atMap = elemMap.get(startElemName);
                     writer.add(modifyAndReturnStartElement(startElement, atMap));
                 } else{
@@ -161,7 +181,7 @@ public class XmlParser {
 
     }
 
-    private static StartElement modifyAndReturnStartElement(StartElement startElement, Map<String,String> atMap){
+    public static StartElement modifyAndReturnStartElement(StartElement startElement, Map<String,String> atMap){
 
         Iterator<Attribute> attributes = startElement.getAttributes();
         ArrayList<Attribute> updatedAttributes = new ArrayList<>();

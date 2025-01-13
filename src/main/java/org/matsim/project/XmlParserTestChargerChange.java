@@ -11,17 +11,20 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
+
+import static org.matsim.project.XmlParser.*;
 
 public class XmlParserTestChargerChange {
 
     public static void main(String[] args) throws XMLStreamException, FileNotFoundException {
         String path = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
 
-        ArrayList<StartElement> links = XmlParserTestChargerChange.findTagsInXMLFile(path, "link");
+        ArrayList<StartElement> links = findTagsInXMLFile(path, "link");
         String[] linkIDs = new String[links.size()];
         for(int i = 0; i < links.size(); i++){
-            linkIDs[i] = XmlParserTestChargerChange.getValueFromTag(links.get(i), "id");
+            linkIDs[i] = getValueFromTag(links.get(i), "id");
             System.out.println(linkIDs[i]);
         }
 
@@ -38,6 +41,8 @@ public class XmlParserTestChargerChange {
         String newHomeId = linkIDs[homeIdIndex];
         String newChargerId = linkIDs[chargerIdIndex];
         String newEventType = "charging";
+
+
 
 
         String plansPath = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
@@ -60,13 +65,13 @@ public class XmlParserTestChargerChange {
                         Attribute at = attributes.next();
                         if(at.getName().getLocalPart().equals("type")){
                             if (at.getValue().equals("work") && i < 1){
-                                StartElement newST = modifyAndReturnStartElement(startElement, "type", newEventType);
-                                writer.add(modifyAndReturnStartElement(newST,"link", newChargerId));
+                                StartElement newST = modifyAndReturnStartElement(startElement, Map.of("type", newEventType));
+                                writer.add(modifyAndReturnStartElement(newST,Map.of("link", newChargerId)));
                                 i++;
                             } else if(at.getValue().equals("work")){
-                                writer.add(modifyAndReturnStartElement(startElement, "link", newWorkId));
+                                writer.add(modifyAndReturnStartElement(startElement, Map.of("link", newWorkId)));
                             } else if (at.getValue().equals("home")) {
-                                writer.add(modifyAndReturnStartElement(startElement, "link", newHomeId));
+                                writer.add(modifyAndReturnStartElement(startElement, Map.of("link", newHomeId)));
                             }
                             break;
                         }
@@ -82,55 +87,6 @@ public class XmlParserTestChargerChange {
         reader.close();
         writer.close();
 
-    }
-
-    public static ArrayList<StartElement> findTagsInXMLFile(String filePath, String tagName) throws FileNotFoundException, XMLStreamException {
-        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-        XMLEventReader reader = xmlInputFactory.createXMLEventReader(new FileInputStream(filePath));
-
-        ArrayList<StartElement> foundTags = new ArrayList<>();
-        while(reader.hasNext()){
-            XMLEvent nextEvent = reader.nextEvent();
-            if (nextEvent.isStartElement()) {
-                StartElement startElement = nextEvent.asStartElement();
-                if(startElement.getName().getLocalPart().equals(tagName)){
-                    foundTags.add(startElement);
-                }
-            }
-        }
-        return foundTags;
-    }
-
-    public static String getValueFromTag(StartElement tag, String valName){
-        Iterator<Attribute> attributes = tag.getAttributes();
-        while(attributes.hasNext()){
-            Attribute at = attributes.next();
-            if(at.getName().getLocalPart().equals(valName)){
-                return at.getValue();
-            }
-
-        }
-        return "not found";
-
-    }
-
-    private static StartElement modifyAndReturnStartElement(StartElement startElement, String attributeToEditName, String newValue){
-
-        Iterator<Attribute> attributes = startElement.getAttributes();
-        ArrayList<Attribute> updatedAttributes = new ArrayList<>();
-
-        XMLEventFactory eventFactory = XMLEventFactory.newInstance();
-
-        while(attributes.hasNext()){
-            Attribute at = attributes.next();
-            if(at.getName().getLocalPart().equals(attributeToEditName)){
-                updatedAttributes.add(eventFactory.createAttribute(attributeToEditName, newValue));
-            } else {
-                updatedAttributes.add(at);
-            }
-        }
-
-        return eventFactory.createStartElement(startElement.getName(), updatedAttributes.iterator(), startElement.getNamespaces());
     }
 
 }

@@ -9,9 +9,7 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Random;
+import java.util.*;
 
 public class XmlParser {
 
@@ -35,42 +33,22 @@ public class XmlParser {
         String newWorkId = linkIDs[workIdIndex];
         String newHomeId = linkIDs[homeIdIndex];
 
+        Map<String, Map<Attribute, Map<String, String>>> tagMap = new HashMap<>();
+        Map<Attribute, Map<String, String>> condMap = new HashMap<>();
+
+        XMLEventFactory eventFactory = XMLEventFactory.newInstance();
+
+        Attribute workAt = eventFactory.createAttribute("type", "work");
+        Attribute homeAt = eventFactory.createAttribute("type", "home");
+
+        condMap.put(workAt, Map.of("link", newWorkId));
+        condMap.put(workAt, Map.of("link", newHomeId));
+
+        tagMap.put("activity", condMap);
 
         String plansPath = "C:\\Users\\gusta\\Documents\\Exjobb\\Workspaces\\matsim-example-project\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan.xml";
-        String outputTempPath = "C:\\Users\\gusta\\Documents\\Exjobb\\Workspaces\\matsim-example-project\\test\\input\\org\\matsim\\evDetour\\triple-charger-plan-test.xml";
-        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-        XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
 
-        XMLEventReader reader = xmlInputFactory.createXMLEventReader(new FileInputStream(plansPath));
-        XMLEventWriter writer = xmlOutputFactory.createXMLEventWriter(new FileOutputStream(plansPath));
-
-        while(reader.hasNext()){
-            XMLEvent nextEvent = reader.nextEvent();
-            if(nextEvent.isStartElement()) {
-                StartElement startElement = nextEvent.asStartElement();
-                if (startElement.getName().getLocalPart().equals("activity")) {
-                    Iterator<Attribute> attributes = startElement.getAttributes();
-                    while(attributes.hasNext()){
-                        Attribute at = attributes.next();
-                        if(at.getName().getLocalPart().equals("type")){
-                            if(at.getValue().equals("work")){
-                                writer.add(modifyAndReturnStartElement(startElement, "link", newWorkId));
-                            } else if (at.getValue().equals("home")) {
-                                writer.add(modifyAndReturnStartElement(startElement, "link", newHomeId));
-                            }
-                            break;
-                        }
-                    }
-                } else{
-                    writer.add(startElement);
-                }
-            } else {
-                writer.add(nextEvent);
-            }
-        }
-
-        reader.close();
-        writer.close();
+        updateXMLFileWithCondition(plansPath, tagMap);
 
     }
 
@@ -104,7 +82,85 @@ public class XmlParser {
 
     }
 
-    private static StartElement modifyAndReturnStartElement(StartElement startElement, String attributeToEditName, String newValue){
+    public static void updateXMLFile(String filepath, Map<String, Map<String,String>> elemMap) throws FileNotFoundException, XMLStreamException {
+        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+        XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
+
+        XMLEventReader reader = xmlInputFactory.createXMLEventReader(new FileInputStream(filepath));
+        XMLEventWriter writer = xmlOutputFactory.createXMLEventWriter(new FileOutputStream(filepath));
+
+        while(reader.hasNext()){
+            XMLEvent nextEvent = reader.nextEvent();
+            if(nextEvent.isStartElement()) {
+                StartElement startElement = nextEvent.asStartElement();
+                String startElemName = startElement.getName().getLocalPart();
+                if (elemMap.containsKey(startElemName)) {
+                    Iterator<Attribute> attributes = startElement.getAttributes();
+                    Map<String,String> atMap = elemMap.get(startElemName);
+                    writer.add(modifyAndReturnStartElement(startElement, atMap));
+                } else{
+                    writer.add(startElement);
+                }
+            } else {
+                writer.add(nextEvent);
+            }
+        }
+
+        reader.close();
+        writer.close();
+
+    }
+
+    /**
+     *
+     * @param filepath The path to the XML file that is to be edited.
+     * @param elemMap Should be a map of maps, where the outer map holds the name of the startElement(s) that should be changed.
+     *                The inner map should have identifier attributes as key (e.g. id) and a Map&lt;String,String&gt;
+     *                as the value, created so that key: attribute name, value: the new value.
+     * @throws FileNotFoundException
+     * @throws XMLStreamException
+     */
+    public static void updateXMLFileWithCondition(String filepath, Map<String, Map<Attribute, Map<String,String>>> elemMap) throws FileNotFoundException, XMLStreamException {
+        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+        XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
+
+        XMLEventReader reader = xmlInputFactory.createXMLEventReader(new FileInputStream(filepath));
+        XMLEventWriter writer = xmlOutputFactory.createXMLEventWriter(new FileOutputStream(filepath));
+
+        while(reader.hasNext()){
+            XMLEvent nextEvent = reader.nextEvent();
+            if(nextEvent.isStartElement()) {
+                StartElement startElement = nextEvent.asStartElement();
+                String startElemName = startElement.getName().getLocalPart();
+                if (elemMap.containsKey(startElemName)) {
+                    Map<Attribute, Map<String,String>> atMap = elemMap.get(startElemName);
+                    Iterator<Attribute> attributes = startElement.getAttributes();
+                    boolean startElemChanged = false;
+                    while (attributes.hasNext()){
+                        Attribute at = attributes.next();
+                        if(atMap.containsKey(at)){
+                            writer.add(modifyAndReturnStartElement(startElement, atMap.get(at)));
+                            startElemChanged = true;
+                            break;
+                        }
+                    }
+                    if(!startElemChanged){
+                        writer.add(startElement);
+                    }
+                } else{
+                    writer.add(startElement);
+                }
+            } else {
+                writer.add(nextEvent);
+            }
+        }
+
+        reader.close();
+        writer.close();
+
+    }
+
+    private static StartElement modifyAndReturnStartElement(StartElement startElement, Map<String,String> atMap){
 
         Iterator<Attribute> attributes = startElement.getAttributes();
         ArrayList<Attribute> updatedAttributes = new ArrayList<>();
@@ -113,8 +169,9 @@ public class XmlParser {
 
         while(attributes.hasNext()){
             Attribute at = attributes.next();
-            if(at.getName().getLocalPart().equals(attributeToEditName)){
-                updatedAttributes.add(eventFactory.createAttribute(attributeToEditName, newValue));
+            String atName = at.getName().getLocalPart();
+            if(atMap.containsKey(atName)){
+                updatedAttributes.add(eventFactory.createAttribute(atName, atMap.get(atName)));
             } else {
                 updatedAttributes.add(at);
             }

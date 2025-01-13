@@ -14,7 +14,7 @@ import java.util.*;
 public class XmlParser {
 
     public static void main(String[] args) throws XMLStreamException, FileNotFoundException {
-        String path = "C:\\Users\\gusta\\Documents\\Exjobb\\Workspaces\\matsim-example-project\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
+        String path = "C:\\Users\\ylvlo\\Documents\\Examensarbete\\Kod\\matsim-example-project2\\test\\input\\org\\matsim\\evDetour\\1pctNetwork.xml";
 
         ArrayList<StartElement> links = XmlParser.findTagsInXMLFile(path, "link");
         String[] linkIDs = new String[links.size()];
@@ -37,6 +37,7 @@ public class XmlParser {
         Map<Attribute, Map<String, String>> condMap = new HashMap<>();
 
         XMLEventFactory eventFactory = XMLEventFactory.newInstance();
+
 
         Attribute workAt = eventFactory.createAttribute("type", "work");
         Attribute homeAt = eventFactory.createAttribute("type", "home");
@@ -179,4 +180,5 @@ public class XmlParser {
 
         return eventFactory.createStartElement(startElement.getName(), updatedAttributes.iterator(), startElement.getNamespaces());
     }
+
 }
